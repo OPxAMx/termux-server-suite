@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+import { getStoredCommands } from "@/lib/commandStore";
 
 interface TerminalLine {
   type: "input" | "output" | "error" | "info";
   content: string;
 }
 
-const COMMANDS: Record<string, (args: string[]) => TerminalLine[]> = {
+const BUILT_IN_COMMANDS: Record<string, (args: string[]) => TerminalLine[]> = {
   help: () => [
     { type: "info", content: "Available commands:" },
     { type: "output", content: "  help          - Show this help" },
