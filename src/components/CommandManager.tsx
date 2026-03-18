@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, Trash2, Search, Download, Database } from "lucide-react";
+import { Upload, Trash2, Search, Download, Database, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   CommandEntry,
