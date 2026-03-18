@@ -98,6 +98,12 @@ const CommandManager = () => {
           >
             <Download className="w-3 h-3" /> Export
           </button>
+          <button
+            onClick={downloadExample}
+            className="flex items-center gap-1 px-2 py-1 text-[10px] rounded border border-terminal-yellow/30 bg-terminal-yellow/10 text-terminal-yellow hover:bg-terminal-yellow/20 transition-all font-display font-semibold"
+          >
+            <FileDown className="w-3 h-3" /> Exemple
+          </button>
           <input
             ref={fileRef}
             type="file"
