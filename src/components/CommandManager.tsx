@@ -48,7 +48,29 @@ const CommandManager = () => {
     toast.info(`Commande "${name}" supprimée`);
   };
 
-  const exportCSV = () => {
+  const downloadExample = () => {
+    const example = `NomCommande,HowToUse,ContenueHelp,Alias,Function,Utility,Category
+nmap,"nmap [options] <target>","Scan réseau pour découvrir hôtes et services","nm","scan_network()","Scanner de ports et découverte réseau","Network"
+htop,"htop","Moniteur de processus interactif","ht","show_processes()","Visualiser les processus système en temps réel","System"
+curl,"curl [options] <url>","Transférer des données depuis/vers un serveur","cl","http_request()","Outil de transfert HTTP/HTTPS","Network"
+ffmpeg,"ffmpeg -i input output","Convertisseur multimédia universel","ff","convert_media()","Conversion et traitement audio/vidéo","Utils"
+grep,"grep [pattern] [file]","Rechercher des motifs dans les fichiers","gr","search_text()","Filtrer du texte avec des expressions régulières","Files"
+chmod,"chmod [mode] [file]","Changer les permissions d'un fichier","chm","set_permissions()","Gérer les droits d'accès fichiers","Security"
+tar,"tar [options] [archive] [files]","Archiver et compresser des fichiers","t","archive_files()","Créer et extraire des archives","Files"
+ssh,"ssh user@host","Se connecter à un serveur distant","s","remote_connect()","Connexion shell sécurisée","Network"
+python,"python [script.py]","Interpréteur Python","py","run_python()","Exécuter des scripts Python","Utils"
+git,"git [command]","Système de contrôle de version","g","version_control()","Gérer le code source avec Git","Utils"`;
+    const blob = new Blob([example], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "exemple-commandes.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Fichier exemple.csv téléchargé");
+  };
+
+
     const headers = "NomCommande,HowToUse,ContenueHelp,Alias,Function,Utility,Category";
     const rows = commands.map(
       (c) =>
