@@ -121,12 +121,33 @@ const Terminal = () => {
     const command = parts[0];
     const args = parts.slice(1);
 
-    // Handle "uname -a" as a special case
-    const handler = COMMANDS[trimmed] || COMMANDS[command];
+    // Check built-in commands first
+    const handler = BUILT_IN_COMMANDS[trimmed] || BUILT_IN_COMMANDS[command];
     if (handler) {
       newLines.push(...handler(args));
     } else {
-      newLines.push({ type: "error", content: `bash: ${command}: command not found` });
+      // Check user-uploaded commands from localStorage
+      const storedCommands = getStoredCommands();
+      const userCmd = storedCommands.find(
+        (c) =>
+          c.NomCommande.toLowerCase() === command.toLowerCase() ||
+          c.Alias.toLowerCase() === command.toLowerCase()
+      );
+      if (userCmd) {
+        if (args.includes("--help") || args.includes("-h")) {
+          newLines.push({ type: "info", content: `${userCmd.NomCommande} — ${userCmd.Utility}` });
+          newLines.push({ type: "output", content: `Usage: ${userCmd.HowToUse}` });
+          newLines.push({ type: "output", content: userCmd.ContenueHelp });
+          newLines.push({ type: "output", content: `Category: ${userCmd.Category}` });
+          if (userCmd.Alias) newLines.push({ type: "output", content: `Alias: ${userCmd.Alias}` });
+        } else {
+          newLines.push({ type: "info", content: `[${userCmd.Category}] ${userCmd.NomCommande}` });
+          newLines.push({ type: "output", content: userCmd.Function || userCmd.Utility });
+          newLines.push({ type: "output", content: `Type '${userCmd.NomCommande} --help' for details` });
+        }
+      } else {
+        newLines.push({ type: "error", content: `bash: ${command}: command not found` });
+      }
     }
 
     setLines(newLines);
