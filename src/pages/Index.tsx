@@ -1,21 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Terminal from "@/components/Terminal";
 import ServerPanel from "@/components/ServerPanel";
 import AlienCube from "@/components/AlienCube";
 import CommandManager from "@/components/CommandManager";
 import MediaPlayer from "@/components/MediaPlayer";
-import { Wifi, Cpu, HardDrive, MemoryStick, Box, Terminal as TerminalIcon, Database, Play } from "lucide-react";
+import FileManager from "@/components/FileManager";
+import SettingsPanel from "@/components/SettingsPanel";
+import { applyTheme, getStoredTheme, getStoredBrightness } from "@/lib/themeStore";
+import { Wifi, Cpu, HardDrive, MemoryStick, Box, Terminal as TerminalIcon, Database, Play, Folder, Settings } from "lucide-react";
 
-type TabId = "terminal" | "commands" | "media";
+type TabId = "terminal" | "commands" | "media" | "files";
 
 const StatusBar = ({
   onCubeToggle,
   activeTab,
   onTabChange,
+  onSettings,
 }: {
   onCubeToggle: () => void;
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
+  onSettings: () => void;
 }) => (
   <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/50 text-xs text-muted-foreground">
     <div className="flex items-center gap-3">
@@ -24,6 +29,7 @@ const StatusBar = ({
         {([
           { id: "terminal" as TabId, icon: <TerminalIcon className="w-3 h-3" />, label: "TERM" },
           { id: "commands" as TabId, icon: <Database className="w-3 h-3" />, label: "CMD" },
+          { id: "files" as TabId, icon: <Folder className="w-3 h-3" />, label: "FILES" },
           { id: "media" as TabId, icon: <Play className="w-3 h-3" />, label: "MEDIA" },
         ]).map((tab) => (
           <button
@@ -42,6 +48,12 @@ const StatusBar = ({
     </div>
     <div className="flex items-center gap-4">
       <button
+        onClick={onSettings}
+        className="flex items-center gap-1 px-2 py-1 rounded border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-all text-[10px] font-display font-semibold"
+      >
+        <Settings className="w-3 h-3" />
+      </button>
+      <button
         onClick={onCubeToggle}
         className="flex items-center gap-1 px-2 py-1 rounded border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all text-[10px] font-display font-semibold glow-box-green"
       >
@@ -59,6 +71,11 @@ const Index = () => {
   const [cubeMode, setCubeMode] = useState(false);
   const [folding, setFolding] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("terminal");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    applyTheme(getStoredTheme(), getStoredBrightness());
+  }, []);
 
   const handleCubeToggle = () => {
     if (!cubeMode) {
@@ -84,6 +101,8 @@ const Index = () => {
         return <CommandManager />;
       case "media":
         return <MediaPlayer />;
+      case "files":
+        return <FileManager />;
       default:
         return <Terminal />;
     }
@@ -96,6 +115,7 @@ const Index = () => {
           onCubeToggle={handleCubeToggle}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          onSettings={() => setSettingsOpen(true)}
         />
       )}
 
@@ -117,6 +137,7 @@ const Index = () => {
       )}
 
       {cubeMode && <AlienCube onExpand={handleExpand} />}
+      <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 };
