@@ -2,13 +2,43 @@ import { useState } from "react";
 import Terminal from "@/components/Terminal";
 import ServerPanel from "@/components/ServerPanel";
 import AlienCube from "@/components/AlienCube";
-import { Wifi, Cpu, HardDrive, MemoryStick, Box } from "lucide-react";
+import CommandManager from "@/components/CommandManager";
+import MediaPlayer from "@/components/MediaPlayer";
+import { Wifi, Cpu, HardDrive, MemoryStick, Box, Terminal as TerminalIcon, Database, Play } from "lucide-react";
 
-const StatusBar = ({ onCubeToggle }: { onCubeToggle: () => void }) => (
+type TabId = "terminal" | "commands" | "media";
+
+const StatusBar = ({
+  onCubeToggle,
+  activeTab,
+  onTabChange,
+}: {
+  onCubeToggle: () => void;
+  activeTab: TabId;
+  onTabChange: (tab: TabId) => void;
+}) => (
   <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/50 text-xs text-muted-foreground">
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3">
       <span className="text-primary font-display font-bold text-sm glow-green">⟩ TERMUX</span>
-      <span className="hidden sm:inline">v0.118</span>
+      <div className="flex items-center gap-1 ml-2">
+        {([
+          { id: "terminal" as TabId, icon: <TerminalIcon className="w-3 h-3" />, label: "TERM" },
+          { id: "commands" as TabId, icon: <Database className="w-3 h-3" />, label: "CMD" },
+          { id: "media" as TabId, icon: <Play className="w-3 h-3" />, label: "MEDIA" },
+        ]).map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-display font-semibold transition-all ${
+              activeTab === tab.id
+                ? "bg-primary/20 text-primary border border-primary/30 glow-box-green"
+                : "text-muted-foreground hover:text-foreground border border-transparent"
+            }`}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </div>
     </div>
     <div className="flex items-center gap-4">
       <button
@@ -28,6 +58,7 @@ const StatusBar = ({ onCubeToggle }: { onCubeToggle: () => void }) => (
 const Index = () => {
   const [cubeMode, setCubeMode] = useState(false);
   const [folding, setFolding] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>("terminal");
 
   const handleCubeToggle = () => {
     if (!cubeMode) {
@@ -47,11 +78,27 @@ const Index = () => {
     }, 400);
   };
 
+  const renderMainPanel = () => {
+    switch (activeTab) {
+      case "commands":
+        return <CommandManager />;
+      case "media":
+        return <MediaPlayer />;
+      default:
+        return <Terminal />;
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
-      {!cubeMode && <StatusBar onCubeToggle={handleCubeToggle} />}
+      {!cubeMode && (
+        <StatusBar
+          onCubeToggle={handleCubeToggle}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
 
-      {/* Main content with fold animation */}
       {!cubeMode && (
         <div
           className={`flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 p-4 overflow-hidden transition-all duration-500 ${
@@ -59,7 +106,7 @@ const Index = () => {
           }`}
           style={{ transformOrigin: "center center", perspective: "1000px" }}
         >
-          <Terminal />
+          {renderMainPanel()}
           <div className="overflow-y-auto">
             <h2 className="font-display font-semibold text-sm text-muted-foreground mb-3 uppercase tracking-wider">
               Server Management
@@ -69,7 +116,6 @@ const Index = () => {
         </div>
       )}
 
-      {/* 3D Cube mode */}
       {cubeMode && <AlienCube onExpand={handleExpand} />}
     </div>
   );
