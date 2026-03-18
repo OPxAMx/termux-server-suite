@@ -69,8 +69,7 @@ git,"git [command]","Système de contrôle de version","g","version_control()","
     URL.revokeObjectURL(url);
     toast.success("Fichier exemple.csv téléchargé");
   };
-
-
+  const exportCSV = () => {
     const headers = "NomCommande,HowToUse,ContenueHelp,Alias,Function,Utility,Category";
     const rows = commands.map(
       (c) =>
