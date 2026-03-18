@@ -1,8 +1,11 @@
-import { Power, RefreshCw, Settings, Shield, Terminal } from "lucide-react";
+import { Power, RefreshCw, Settings, Shield, Terminal, Link } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import ConfigModal from "./ConfigModal";
 
 interface ServerCardProps {
   name: string;
+  serverKey: "ssh" | "smb" | "ftp";
   icon: React.ReactNode;
   port: number;
   status: "running" | "stopped";
@@ -10,6 +13,7 @@ interface ServerCardProps {
   uptime: string;
   glowClass: string;
   onToggle: () => void;
+  onOpenConfig: () => void;
 }
 
 const ServerCard = ({
@@ -21,8 +25,13 @@ const ServerCard = ({
   uptime,
   glowClass,
   onToggle,
+  onOpenConfig,
 }: ServerCardProps) => {
   const isRunning = status === "running";
+
+  const handleRestart = () => {
+    toast.info(`Restarting ${name}...`);
+  };
 
   return (
     <div className={`rounded-lg border border-border bg-card p-5 ${glowClass} transition-all duration-300`}>
@@ -66,14 +75,14 @@ const ServerCard = ({
       </div>
 
       <div className="flex gap-2 mt-4">
-        <button className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-md border border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={onOpenConfig} className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-md border border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
           <Settings className="w-3 h-3" /> Config
         </button>
-        <button className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-md border border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={handleRestart} className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-md border border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
           <RefreshCw className="w-3 h-3" /> Restart
         </button>
-        <button className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-md border border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
-          <Shield className="w-3 h-3" /> Logs
+        <button onClick={onOpenConfig} className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-md border border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
+          <Link className="w-3 h-3" /> Share
         </button>
       </div>
     </div>
@@ -92,6 +101,7 @@ const ServerPanel = () => {
     smb: { status: "running", connections: 1, uptime: "3d 8h" },
     ftp: { status: "stopped", connections: 0, uptime: "—" },
   });
+  const [configOpen, setConfigOpen] = useState<"ssh" | "smb" | "ftp" | null>(null);
 
   const toggle = (key: string) => {
     setServers((prev) => ({
@@ -106,32 +116,48 @@ const ServerPanel = () => {
   };
 
   return (
-    <div className="grid gap-4">
-      <ServerCard
-        name="SSH Server"
-        icon={<Terminal className="w-4 h-4 text-terminal-cyan" />}
-        port={8022}
-        {...servers.ssh}
-        glowClass={servers.ssh.status === "running" ? "glow-box-cyan" : ""}
-        onToggle={() => toggle("ssh")}
-      />
-      <ServerCard
-        name="SMB Server"
-        icon={<Shield className="w-4 h-4 text-terminal-yellow" />}
-        port={8445}
-        {...servers.smb}
-        glowClass={servers.smb.status === "running" ? "glow-box-yellow" : ""}
-        onToggle={() => toggle("smb")}
-      />
-      <ServerCard
-        name="FTP Server"
-        icon={<RefreshCw className="w-4 h-4 text-primary" />}
-        port={8021}
-        {...servers.ftp}
-        glowClass={servers.ftp.status === "running" ? "glow-box-green" : ""}
-        onToggle={() => toggle("ftp")}
-      />
-    </div>
+    <>
+      <div className="grid gap-4">
+        <ServerCard
+          name="SSH Server"
+          serverKey="ssh"
+          icon={<Terminal className="w-4 h-4 text-terminal-cyan" />}
+          port={8022}
+          {...servers.ssh}
+          glowClass={servers.ssh.status === "running" ? "glow-box-cyan" : ""}
+          onToggle={() => toggle("ssh")}
+          onOpenConfig={() => setConfigOpen("ssh")}
+        />
+        <ServerCard
+          name="SMB Server"
+          serverKey="smb"
+          icon={<Shield className="w-4 h-4 text-terminal-yellow" />}
+          port={8445}
+          {...servers.smb}
+          glowClass={servers.smb.status === "running" ? "glow-box-yellow" : ""}
+          onToggle={() => toggle("smb")}
+          onOpenConfig={() => setConfigOpen("smb")}
+        />
+        <ServerCard
+          name="FTP Server"
+          serverKey="ftp"
+          icon={<RefreshCw className="w-4 h-4 text-primary" />}
+          port={8021}
+          {...servers.ftp}
+          glowClass={servers.ftp.status === "running" ? "glow-box-green" : ""}
+          onToggle={() => toggle("ftp")}
+          onOpenConfig={() => setConfigOpen("ftp")}
+        />
+      </div>
+
+      {configOpen && (
+        <ConfigModal
+          serverType={configOpen}
+          isOpen={true}
+          onClose={() => setConfigOpen(null)}
+        />
+      )}
+    </>
   );
 };
 
