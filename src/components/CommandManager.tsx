@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, Trash2, Search, Download, Database } from "lucide-react";
+import { Upload, Trash2, Search, Download, Database, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   CommandEntry,
@@ -48,6 +48,27 @@ const CommandManager = () => {
     toast.info(`Commande "${name}" supprimée`);
   };
 
+  const downloadExample = () => {
+    const example = `NomCommande,HowToUse,ContenueHelp,Alias,Function,Utility,Category
+nmap,"nmap [options] <target>","Scan réseau pour découvrir hôtes et services","nm","scan_network()","Scanner de ports et découverte réseau","Network"
+htop,"htop","Moniteur de processus interactif","ht","show_processes()","Visualiser les processus système en temps réel","System"
+curl,"curl [options] <url>","Transférer des données depuis/vers un serveur","cl","http_request()","Outil de transfert HTTP/HTTPS","Network"
+ffmpeg,"ffmpeg -i input output","Convertisseur multimédia universel","ff","convert_media()","Conversion et traitement audio/vidéo","Utils"
+grep,"grep [pattern] [file]","Rechercher des motifs dans les fichiers","gr","search_text()","Filtrer du texte avec des expressions régulières","Files"
+chmod,"chmod [mode] [file]","Changer les permissions d'un fichier","chm","set_permissions()","Gérer les droits d'accès fichiers","Security"
+tar,"tar [options] [archive] [files]","Archiver et compresser des fichiers","t","archive_files()","Créer et extraire des archives","Files"
+ssh,"ssh user@host","Se connecter à un serveur distant","s","remote_connect()","Connexion shell sécurisée","Network"
+python,"python [script.py]","Interpréteur Python","py","run_python()","Exécuter des scripts Python","Utils"
+git,"git [command]","Système de contrôle de version","g","version_control()","Gérer le code source avec Git","Utils"`;
+    const blob = new Blob([example], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "exemple-commandes.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Fichier exemple.csv téléchargé");
+  };
   const exportCSV = () => {
     const headers = "NomCommande,HowToUse,ContenueHelp,Alias,Function,Utility,Category";
     const rows = commands.map(
@@ -97,6 +118,12 @@ const CommandManager = () => {
             className="flex items-center gap-1 px-2 py-1 text-[10px] rounded border border-terminal-cyan/30 bg-terminal-cyan/10 text-terminal-cyan hover:bg-terminal-cyan/20 transition-all font-display font-semibold"
           >
             <Download className="w-3 h-3" /> Export
+          </button>
+          <button
+            onClick={downloadExample}
+            className="flex items-center gap-1 px-2 py-1 text-[10px] rounded border border-terminal-yellow/30 bg-terminal-yellow/10 text-terminal-yellow hover:bg-terminal-yellow/20 transition-all font-display font-semibold"
+          >
+            <FileDown className="w-3 h-3" /> Exemple
           </button>
           <input
             ref={fileRef}

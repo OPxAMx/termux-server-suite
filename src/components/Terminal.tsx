@@ -6,6 +6,27 @@ interface TerminalLine {
   content: string;
 }
 
+const HISTORY_KEY = "termux-terminal-history";
+const LINES_KEY = "termux-terminal-lines";
+
+function loadHistory(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  } catch { return []; }
+}
+function saveHistory(h: string[]) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-200)));
+}
+function loadLines(): TerminalLine[] {
+  try {
+    const d = localStorage.getItem(LINES_KEY);
+    return d ? JSON.parse(d) : null;
+  } catch { return null as any; }
+}
+function saveLines(l: TerminalLine[]) {
+  localStorage.setItem(LINES_KEY, JSON.stringify(l.slice(-300)));
+}
+
 const BUILT_IN_COMMANDS: Record<string, (args: string[]) => TerminalLine[]> = {
   help: () => [
     { type: "info", content: "Available commands:" },
@@ -22,7 +43,7 @@ const BUILT_IN_COMMANDS: Record<string, (args: string[]) => TerminalLine[]> = {
     { type: "output", content: "  neofetch      - System info display" },
   ],
   whoami: () => [{ type: "output", content: "u0_a123" }],
-  "uname": (args) => {
+  uname: (args) => {
     if (args.includes("-a")) {
       return [{ type: "output", content: "Linux localhost 5.15.41-android13 #1 SMP aarch64 Android" }];
     }
@@ -86,20 +107,41 @@ const BUILT_IN_COMMANDS: Record<string, (args: string[]) => TerminalLine[]> = {
   ],
 };
 
+function getAllCommandNames(): string[] {
+  const builtIn = Object.keys(BUILT_IN_COMMANDS);
+  const stored = getStoredCommands().flatMap((c) => [c.NomCommande, c.Alias].filter(Boolean));
+  return [...new Set([...builtIn, ...stored])];
+}
+
 const Terminal = () => {
-  const [lines, setLines] = useState<TerminalLine[]>([
-    { type: "info", content: "Welcome to Termux v0.118 — Type 'help' for commands" },
-    { type: "output", content: "" },
-  ]);
+  const [lines, setLines] = useState<TerminalLine[]>(() => {
+    const saved = loadLines();
+    return saved || [
+      { type: "info", content: "Welcome to Termux v0.118 — Type 'help' for commands" },
+      { type: "output", content: "" },
+    ];
+  });
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<string[]>(loadHistory);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [suggestion, setSuggestion] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   }, [lines]);
+
+  useEffect(() => {
+    saveLines(lines);
+  }, [lines]);
+
+  useEffect(() => {
+    if (!input) { setSuggestion(""); return; }
+    const all = getAllCommandNames();
+    const match = all.find((c) => c.toLowerCase().startsWith(input.toLowerCase()) && c.toLowerCase() !== input.toLowerCase());
+    setSuggestion(match || "");
+  }, [input]);
 
   const handleCommand = (cmd: string) => {
     const trimmed = cmd.trim();
@@ -113,7 +155,9 @@ const Terminal = () => {
     if (trimmed === "clear") {
       setLines([]);
       setInput("");
-      setHistory((h) => [...h, trimmed]);
+      const newH = [...history, trimmed];
+      setHistory(newH);
+      saveHistory(newH);
       return;
     }
 
@@ -121,12 +165,10 @@ const Terminal = () => {
     const command = parts[0];
     const args = parts.slice(1);
 
-    // Check built-in commands first
     const handler = BUILT_IN_COMMANDS[trimmed] || BUILT_IN_COMMANDS[command];
     if (handler) {
       newLines.push(...handler(args));
     } else {
-      // Check user-uploaded commands from localStorage
       const storedCommands = getStoredCommands();
       const userCmd = storedCommands.find(
         (c) =>
@@ -152,12 +194,19 @@ const Terminal = () => {
 
     setLines(newLines);
     setInput("");
-    setHistory((h) => [...h, trimmed]);
+    setSuggestion("");
+    const newH = [...history, trimmed];
+    setHistory(newH);
+    saveHistory(newH);
     setHistoryIndex(-1);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "Tab" && suggestion) {
+      e.preventDefault();
+      setInput(suggestion);
+      setSuggestion("");
+    } else if (e.key === "Enter") {
       handleCommand(input);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -205,17 +254,24 @@ const Terminal = () => {
             {line.content}
           </div>
         ))}
-        <div className="flex items-center gap-1 text-primary glow-green">
+        <div className="flex items-center gap-1 text-primary glow-green relative">
           <span>$</span>
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent outline-none border-none text-sm text-primary caret-primary"
-            autoFocus
-            spellCheck={false}
-          />
+          <div className="flex-1 relative">
+            {suggestion && (
+              <span className="absolute inset-0 text-sm text-muted-foreground/30 pointer-events-none select-none">
+                {suggestion}
+              </span>
+            )}
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full bg-transparent outline-none border-none text-sm text-primary caret-primary relative z-10"
+              autoFocus
+              spellCheck={false}
+            />
+          </div>
         </div>
       </div>
     </div>
