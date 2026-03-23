@@ -4,16 +4,17 @@ import AlienCube from "@/components/AlienCube";
 import CommandManager from "@/components/CommandManager";
 import MediaPlayer from "@/components/MediaPlayer";
 import FileManager from "@/components/FileManager";
+import CyberBrowser from "@/components/CyberBrowser";
 import SettingsPanel from "@/components/SettingsPanel";
 import ConfigModal from "@/components/ConfigModal";
 import { applyTheme, getStoredTheme, getStoredBrightness } from "@/lib/themeStore";
 import {
   Wifi, Cpu, HardDrive, MemoryStick, Box,
   Terminal as TerminalIcon, Database, Play, Folder, Settings,
-  Shield, RefreshCw, Github, Code2, Codepen,
+  Shield, RefreshCw, Github, Code2, Codepen, Globe,
 } from "lucide-react";
 
-type TabId = "terminal" | "commands" | "media" | "files";
+type TabId = "terminal" | "commands" | "media" | "files" | "browser";
 
 const StatusBar = ({
   onCubeToggle,
@@ -37,6 +38,7 @@ const StatusBar = ({
           { id: "commands" as TabId, icon: <Database className="w-3 h-3" />, label: "CMD" },
           { id: "files" as TabId, icon: <Folder className="w-3 h-3" />, label: "FILES" },
           { id: "media" as TabId, icon: <Play className="w-3 h-3" />, label: "MEDIA" },
+          { id: "browser" as TabId, icon: <Globe className="w-3 h-3" />, label: "BROWSER" },
         ]).map((tab) => (
           <button
             key={tab.id}
@@ -152,6 +154,8 @@ const Index = () => {
         return <MediaPlayer />;
       case "files":
         return <FileManager />;
+      case "browser":
+        return <CyberBrowser />;
       default:
         return <Terminal />;
     }
