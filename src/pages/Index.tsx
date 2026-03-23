@@ -154,6 +154,8 @@ const Index = () => {
         return <MediaPlayer />;
       case "files":
         return <FileManager />;
+      case "browser":
+        return <CyberBrowser />;
       default:
         return <Terminal />;
     }
