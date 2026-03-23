@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Music, Video, Radio, Eye, Play, ExternalLink, Plus, X, Trash2 } from "lucide-react";
+import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2 } from "lucide-react";
 
-type MediaCategory = "Music" | "Video" | "Podcast" | "PRN";
+type MediaCategory = "Music" | "Video" | "Podcast" | "Playlist";
 
 interface MediaItem {
   title: string;
@@ -25,10 +25,10 @@ const CATEGORY_META: Record<MediaCategory, { icon: React.ReactNode; color: strin
     color: "text-[hsl(var(--terminal-yellow))]",
     tagBg: "bg-[hsl(var(--terminal-yellow))]/20 text-[hsl(var(--terminal-yellow))] border-[hsl(var(--terminal-yellow))]/30",
   },
-  PRN: {
-    icon: <Eye className="w-3 h-3" />,
-    color: "text-destructive",
-    tagBg: "bg-destructive/20 text-destructive border-destructive/30",
+  Playlist: {
+    icon: <Music className="w-3 h-3" />,
+    color: "text-[hsl(var(--terminal-green))]",
+    tagBg: "bg-[hsl(var(--terminal-green))]/20 text-[hsl(var(--terminal-green))] border-[hsl(var(--terminal-green))]/30",
   },
 };
 
@@ -57,16 +57,14 @@ function savePlaylist(items: MediaItem[]) {
 }
 
 const MediaPlayer = () => {
-  // ✅ CORRECTION 1: Appeler la fonction avec ()
   const [playlist, setPlaylist] = useState<MediaItem[]>(() => loadPlaylist());
   const [activeCategory, setActiveCategory] = useState<MediaCategory | "All">("All");
   const [activeUrl, setActiveUrl] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [customTitle, setCustomTitle] = useState("");
-  const [addCategory, setAddCategory] = useState<MediaCategory>("Music");
+  const [addCategory, setAddCategory] = useState<MediaCategory>("Playlist");
   const [showAdd, setShowAdd] = useState(false);
 
-  // ✅ CORRECTION 2: Initialiser activeUrl après que playlist soit chargée
   useEffect(() => {
     if (playlist.length > 0 && !activeUrl) {
       setActiveUrl(playlist[0].url);
@@ -99,7 +97,6 @@ const MediaPlayer = () => {
     const updated = playlist.filter((_, i) => i !== index);
     setPlaylist(updated);
     savePlaylist(updated);
-    // Si on supprime l'élément actif, passer au premier
     if (activeUrl === playlist[index].url && updated.length > 0) {
       setActiveUrl(updated[0].url);
     }
@@ -232,34 +229,40 @@ const MediaPlayer = () => {
 
       {/* Playlist */}
       <div className="flex-1 overflow-y-auto">
-        {filtered.map((item, i) => {
-          const meta = CATEGORY_META[item.category];
-          const realIndex = playlist.indexOf(item);
-          return (
-            <div
-              key={`${item.url}-${i}`}
-              className={`group flex items-center gap-2 px-4 py-2 text-xs hover:bg-secondary/30 transition-colors ${
-                activeUrl === item.url ? "bg-secondary/50" : ""
-              }`}
-            >
-              <button onClick={() => handlePlayItem(item)} className="flex items-center gap-2 flex-1 text-left">
-                <Play className={`w-3 h-3 ${activeUrl === item.url ? meta.color : "text-muted-foreground"}`} />
-                <span className={activeUrl === item.url ? meta.color : "text-foreground"}>
-                  {item.title}
-                </span>
-              </button>
-              <span className={`px-1.5 py-0.5 rounded text-[9px] font-display font-semibold border ${meta.tagBg}`}>
-                {item.category}
-              </span>
-              <button
-                onClick={() => handleRemove(realIndex)}
-                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+        {filtered.length > 0 ? (
+          filtered.map((item, i) => {
+            const meta = CATEGORY_META[item.category];
+            const realIndex = playlist.indexOf(item);
+            return (
+              <div
+                key={`${item.url}-${i}`}
+                className={`group flex items-center gap-2 px-4 py-2 text-xs hover:bg-secondary/30 transition-colors ${
+                  activeUrl === item.url ? "bg-secondary/50" : ""
+                }`}
               >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-          );
-        })}
+                <button onClick={() => handlePlayItem(item)} className="flex items-center gap-2 flex-1 text-left">
+                  <Play className={`w-3 h-3 ${activeUrl === item.url ? meta.color : "text-muted-foreground"}`} />
+                  <span className={activeUrl === item.url ? meta.color : "text-foreground"}>
+                    {item.title}
+                  </span>
+                </button>
+                <span className={`px-1.5 py-0.5 rounded text-[9px] font-display font-semibold border ${meta.tagBg}`}>
+                  {item.category}
+                </span>
+                <button
+                  onClick={() => handleRemove(realIndex)}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            );
+          })
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
+            Aucun élément dans la playlist actuelle
+          </div>
+        )}
       </div>
     </div>
   );
