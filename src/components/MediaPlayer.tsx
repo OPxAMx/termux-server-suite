@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Music, Video, Radio, Eye, Play, ExternalLink, Plus, X, Trash2 } from "lucide-react";
 
 type MediaCategory = "Music" | "Video" | "Podcast" | "PRN";
@@ -57,13 +57,21 @@ function savePlaylist(items: MediaItem[]) {
 }
 
 const MediaPlayer = () => {
-  const [playlist, setPlaylist] = useState<MediaItem[]>(loadPlaylist);
+  // ✅ CORRECTION 1: Appeler la fonction avec ()
+  const [playlist, setPlaylist] = useState<MediaItem[]>(() => loadPlaylist());
   const [activeCategory, setActiveCategory] = useState<MediaCategory | "All">("All");
-  const [activeUrl, setActiveUrl] = useState(playlist[0]?.url || "");
+  const [activeUrl, setActiveUrl] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [addCategory, setAddCategory] = useState<MediaCategory>("Music");
   const [showAdd, setShowAdd] = useState(false);
+
+  // ✅ CORRECTION 2: Initialiser activeUrl après que playlist soit chargée
+  useEffect(() => {
+    if (playlist.length > 0 && !activeUrl) {
+      setActiveUrl(playlist[0].url);
+    }
+  }, []);
 
   const filtered = activeCategory === "All" ? playlist : playlist.filter((i) => i.category === activeCategory);
 
@@ -91,6 +99,10 @@ const MediaPlayer = () => {
     const updated = playlist.filter((_, i) => i !== index);
     setPlaylist(updated);
     savePlaylist(updated);
+    // Si on supprime l'élément actif, passer au premier
+    if (activeUrl === playlist[index].url && updated.length > 0) {
+      setActiveUrl(updated[0].url);
+    }
   };
 
   const handleCustomGo = () => {
