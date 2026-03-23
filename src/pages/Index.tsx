@@ -38,6 +38,7 @@ const StatusBar = ({
           { id: "commands" as TabId, icon: <Database className="w-3 h-3" />, label: "CMD" },
           { id: "files" as TabId, icon: <Folder className="w-3 h-3" />, label: "FILES" },
           { id: "media" as TabId, icon: <Play className="w-3 h-3" />, label: "MEDIA" },
+          { id: "browser" as TabId, icon: <Globe className="w-3 h-3" />, label: "BROWSER" },
         ]).map((tab) => (
           <button
             key={tab.id}
