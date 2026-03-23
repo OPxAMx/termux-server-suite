@@ -4,16 +4,17 @@ import AlienCube from "@/components/AlienCube";
 import CommandManager from "@/components/CommandManager";
 import MediaPlayer from "@/components/MediaPlayer";
 import FileManager from "@/components/FileManager";
+import CyberBrowser from "@/components/CyberBrowser";
 import SettingsPanel from "@/components/SettingsPanel";
 import ConfigModal from "@/components/ConfigModal";
 import { applyTheme, getStoredTheme, getStoredBrightness } from "@/lib/themeStore";
 import {
   Wifi, Cpu, HardDrive, MemoryStick, Box,
   Terminal as TerminalIcon, Database, Play, Folder, Settings,
-  Shield, RefreshCw, Github, Code2, Codepen,
+  Shield, RefreshCw, Github, Code2, Codepen, Globe,
 } from "lucide-react";
 
-type TabId = "terminal" | "commands" | "media" | "files";
+type TabId = "terminal" | "commands" | "media" | "files" | "browser";
 
 const StatusBar = ({
   onCubeToggle,
