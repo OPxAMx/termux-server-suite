@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu } from "lucide-react";
+import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2 } from "lucide-react";
 
 type MediaCategory = "Music" | "Video" | "Podcast" | "Playlist";
 
@@ -64,8 +64,6 @@ const MediaPlayer = () => {
   const [customTitle, setCustomTitle] = useState("");
   const [addCategory, setAddCategory] = useState<MediaCategory>("Playlist");
   const [showAdd, setShowAdd] = useState(false);
-  // ✅ NOUVEAU : État pour contrôler l'affichage du side panel
-  const [showPlaylist, setShowPlaylist] = useState(true);
 
   useEffect(() => {
     if (playlist.length > 0 && !activeUrl) {
@@ -113,31 +111,20 @@ const MediaPlayer = () => {
   };
 
   return (
-    // ✅ MODIFICATION 1 : Conteneur principal avec position relative (pour position absolute du side panel)
-    <div className="relative flex flex-col h-full rounded-lg border border-border bg-card overflow-hidden">
+    <div className="flex flex-col h-full rounded-lg border border-border bg-card overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/50">
         <div className="flex items-center gap-2">
           <Play className="w-4 h-4 text-primary" />
           <span className="text-xs font-display font-bold text-primary glow-green">MEDIA PLAYER</span>
         </div>
-        <div className="flex items-center gap-2">
-          {/* ✅ NOUVEAU : Bouton pour toggle le side panel */}
-          <button
-            onClick={() => setShowPlaylist(!showPlaylist)}
-            className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all font-display font-semibold"
-          >
-            <Menu className="w-3 h-3" />
-            {showPlaylist ? "HIDE" : "SHOW"}
-          </button>
-          <button
-            onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all font-display font-semibold"
-          >
-            {showAdd ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-            {showAdd ? "CLOSE" : "ADD"}
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all font-display font-semibold"
+        >
+          {showAdd ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+          {showAdd ? "CLOSE" : "ADD"}
+        </button>
       </div>
 
       {/* Category tabs */}
@@ -205,7 +192,24 @@ const MediaPlayer = () => {
         </div>
       )}
 
-      {/* ✅ MODIFICATION 2 : Quick URL section */}
+      {/* iframe viewer */}
+      <div className="relative aspect-video bg-background border-b border-border">
+        {activeUrl ? (
+          <iframe
+            src={activeUrl}
+            className="absolute inset-0 w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Media Player"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
+            Aucun média sélectionné
+          </div>
+        )}
+      </div>
+
+      {/* Quick URL */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <ExternalLink className="w-3 h-3 text-muted-foreground" />
         <input
@@ -223,93 +227,43 @@ const MediaPlayer = () => {
         </button>
       </div>
 
-      {/* ✅ MODIFICATION 3 : iframe viewer prend toute la place restante */}
-      <div className="relative flex-1 bg-background border-b border-border">
-        {activeUrl ? (
-          <iframe
-            src={activeUrl}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title="Media Player"
-          />
+      {/* Playlist */}
+      <div className="flex-1 overflow-y-auto">
+        {filtered.length > 0 ? (
+          filtered.map((item, i) => {
+            const meta = CATEGORY_META[item.category];
+            const realIndex = playlist.indexOf(item);
+            return (
+              <div
+                key={`${item.url}-${i}`}
+                className={`group flex items-center gap-2 px-4 py-2 text-xs hover:bg-secondary/30 transition-colors ${
+                  activeUrl === item.url ? "bg-secondary/50" : ""
+                }`}
+              >
+                <button onClick={() => handlePlayItem(item)} className="flex items-center gap-2 flex-1 text-left">
+                  <Play className={`w-3 h-3 ${activeUrl === item.url ? meta.color : "text-muted-foreground"}`} />
+                  <span className={activeUrl === item.url ? meta.color : "text-foreground"}>
+                    {item.title}
+                  </span>
+                </button>
+                <span className={`px-1.5 py-0.5 rounded text-[9px] font-display font-semibold border ${meta.tagBg}`}>
+                  {item.category}
+                </span>
+                <button
+                  onClick={() => handleRemove(realIndex)}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            );
+          })
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-            Aucun média sélectionné
+            Aucun élément dans la playlist actuelle
           </div>
         )}
       </div>
-
-      {/* ✅ MODIFICATION 4 : Side panel PLAYLIST en position absolute */}
-      {showPlaylist && (
-        <div className="absolute top-0 right-0 w-64 h-full bg-card border-l border-border shadow-lg flex flex-col z-50 rounded-l-lg overflow-hidden">
-          {/* Header du side panel */}
-          <div className="px-3 py-2 border-b border-border bg-secondary/50 flex items-center justify-between">
-            <span className="text-xs font-display font-bold text-primary">PLAYLIST</span>
-            <button
-              onClick={() => setShowPlaylist(false)}
-              className="p-0.5 hover:bg-secondary rounded transition-colors"
-            >
-              <X className="w-3 h-3 text-muted-foreground" />
-            </button>
-          </div>
-
-          {/* Contenu de la playlist */}
-          <div className="flex-1 overflow-y-auto">
-            {filtered.length > 0 ? (
-              filtered.map((item, i) => {
-                const meta = CATEGORY_META[item.category];
-                const realIndex = playlist.indexOf(item);
-                return (
-                  <div
-                    key={`${item.url}-${i}`}
-                    className={`group flex items-center gap-2 px-3 py-2 text-xs hover:bg-secondary/30 transition-colors border-b border-border/50 ${
-                      activeUrl === item.url ? "bg-secondary/50" : ""
-                    }`}
-                  >
-                    <button 
-                      onClick={() => handlePlayItem(item)} 
-                      className="flex items-center gap-2 flex-1 text-left min-w-0"
-                    >
-                      <Play className={`w-3 h-3 flex-shrink-0 ${activeUrl === item.url ? meta.color : "text-muted-foreground"}`} />
-                      <span className={`truncate ${activeUrl === item.url ? meta.color : "text-foreground"}`}>
-                        {item.title}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => handleRemove(realIndex)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground text-xs px-3 text-center">
-                Aucun élément dans la playlist actuelle
-              </div>
-            )}
-          </div>
-
-          {/* Footer du side panel avec catégories */}
-          <div className="border-t border-border bg-secondary/50 p-2 space-y-1">
-            {(Object.keys(CATEGORY_META) as MediaCategory[]).map((cat) => {
-              const meta = CATEGORY_META[cat];
-              const count = playlist.filter((item) => item.category === cat).length;
-              return (
-                <div key={cat} className="flex items-center justify-between text-[9px] px-2 py-1">
-                  <span className="flex items-center gap-1">
-                    {meta.icon}
-                    <span>{cat}</span>
-                  </span>
-                  <span className="text-muted-foreground">({count})</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
