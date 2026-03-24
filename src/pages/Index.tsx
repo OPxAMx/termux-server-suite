@@ -7,6 +7,7 @@ import FileManager from "@/components/FileManager";
 import CyberBrowser from "@/components/CyberBrowser";
 import SettingsPanel from "@/components/SettingsPanel";
 import ConfigModal from "@/components/ConfigModal";
+import FastPastePalette from "@/components/FastPastePalette";
 import { applyTheme, getStoredTheme, getStoredBrightness } from "@/lib/themeStore";
 import {
   Wifi, Cpu, HardDrive, MemoryStick, Box,
@@ -123,6 +124,19 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabId>("terminal");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState<"ssh" | "smb" | "ftp" | null>(null);
+  const [fastPasteOpen, setFastPasteOpen] = useState(false);
+
+  // Global Ctrl+Shift+R for fast paste
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "R") {
+        e.preventDefault();
+        setFastPasteOpen((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useEffect(() => {
     applyTheme(getStoredTheme(), getStoredBrightness());
@@ -181,6 +195,7 @@ const Index = () => {
       {configOpen && (
         <ConfigModal serverType={configOpen} isOpen={true} onClose={() => setConfigOpen(null)} />
       )}
+      <FastPastePalette open={fastPasteOpen} onClose={() => setFastPasteOpen(false)} />
     </div>
   );
 };
