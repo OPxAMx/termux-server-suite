@@ -7,6 +7,7 @@ import FileManager from "@/components/FileManager";
 import CyberBrowser from "@/components/CyberBrowser";
 import SettingsPanel from "@/components/SettingsPanel";
 import ConfigModal from "@/components/ConfigModal";
+import FastPastePalette from "@/components/FastPastePalette";
 import { applyTheme, getStoredTheme, getStoredBrightness } from "@/lib/themeStore";
 import {
   Wifi, Cpu, HardDrive, MemoryStick, Box,
