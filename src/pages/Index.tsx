@@ -195,6 +195,7 @@ const Index = () => {
       {configOpen && (
         <ConfigModal serverType={configOpen} isOpen={true} onClose={() => setConfigOpen(null)} />
       )}
+      <FastPastePalette open={fastPasteOpen} onClose={() => setFastPasteOpen(false)} />
     </div>
   );
 };
