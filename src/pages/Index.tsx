@@ -124,6 +124,19 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabId>("terminal");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState<"ssh" | "smb" | "ftp" | null>(null);
+  const [fastPasteOpen, setFastPasteOpen] = useState(false);
+
+  // Global Ctrl+Shift+R for fast paste
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "R") {
+        e.preventDefault();
+        setFastPasteOpen((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useEffect(() => {
     applyTheme(getStoredTheme(), getStoredBrightness());
