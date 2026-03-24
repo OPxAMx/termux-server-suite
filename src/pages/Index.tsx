@@ -146,21 +146,6 @@ const Index = () => {
     }, 400);
   };
 
-  const renderMainPanel = () => {
-    switch (activeTab) {
-      case "commands":
-        return <CommandManager />;
-      case "media":
-        return <MediaPlayer />;
-      case "files":
-        return <FileManager />;
-      case "browser":
-        return <CyberBrowser />;
-      default:
-        return <Terminal />;
-    }
-  };
-
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {!cubeMode && (
@@ -180,7 +165,11 @@ const Index = () => {
           }`}
           style={{ transformOrigin: "center center", perspective: "1000px" }}
         >
-          {renderMainPanel()}
+          <div className={`h-full ${activeTab === "terminal" ? "" : "hidden"}`}><Terminal /></div>
+          <div className={`h-full ${activeTab === "commands" ? "" : "hidden"}`}><CommandManager /></div>
+          <div className={`h-full ${activeTab === "media" ? "" : "hidden"}`}><MediaPlayer /></div>
+          <div className={`h-full ${activeTab === "files" ? "" : "hidden"}`}><FileManager /></div>
+          <div className={`h-full ${activeTab === "browser" ? "" : "hidden"}`}><CyberBrowser /></div>
         </div>
       )}
 
