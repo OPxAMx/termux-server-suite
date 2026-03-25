@@ -8,6 +8,7 @@ import CyberBrowser from "@/components/CyberBrowser";
 import SettingsPanel from "@/components/SettingsPanel";
 import ConfigModal from "@/components/ConfigModal";
 import FastPastePalette from "@/components/FastPastePalette";
+import DataManager from "@/components/DataManager";
 import { applyTheme, getStoredTheme, getStoredBrightness } from "@/lib/themeStore";
 import {
   Wifi, Cpu, HardDrive, MemoryStick, Box,
@@ -15,7 +16,7 @@ import {
   Shield, RefreshCw, Github, Code2, Codepen, Globe,
 } from "lucide-react";
 
-type TabId = "terminal" | "commands" | "media" | "files" | "browser";
+type TabId = "terminal" | "commands" | "media" | "files" | "browser" | "data";
 
 const StatusBar = ({
   onCubeToggle,
@@ -40,6 +41,7 @@ const StatusBar = ({
           { id: "files" as TabId, icon: <Folder className="w-3 h-3" />, label: "FILES" },
           { id: "media" as TabId, icon: <Play className="w-3 h-3" />, label: "MEDIA" },
           { id: "browser" as TabId, icon: <Globe className="w-3 h-3" />, label: "BROWSER" },
+          { id: "data" as TabId, icon: <Database className="w-3 h-3" />, label: "DATA" },
         ]).map((tab) => (
           <button
             key={tab.id}
@@ -184,6 +186,7 @@ const Index = () => {
           <div className={`h-full ${activeTab === "media" ? "" : "hidden"}`}><MediaPlayer /></div>
           <div className={`h-full ${activeTab === "files" ? "" : "hidden"}`}><FileManager /></div>
           <div className={`h-full ${activeTab === "browser" ? "" : "hidden"}`}><CyberBrowser /></div>
+          <div className={`h-full ${activeTab === "data" ? "" : "hidden"}`}><DataManager /></div>
         </div>
       )}
 
