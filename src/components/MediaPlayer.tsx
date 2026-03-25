@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu } from "lucide-react";
+import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu, Download, Upload } from "lucide-react";
+import { exportPlaylistCSV, importPlaylistCSV, downloadFile, uploadFile, addLog } from "@/lib/dataManager";
 
 type MediaCategory = "Music" | "Video" | "Podcast" | "Playlist";
 
@@ -129,6 +130,30 @@ const MediaPlayer = () => {
           >
             <Menu className="w-3 h-3" />
             {showPlaylist ? "HIDE" : "SHOW"}
+          </button>
+          <button
+            onClick={() => {
+              const csv = exportPlaylistCSV();
+              if (csv) { downloadFile("playlist.csv", csv); addLog("action", "MediaPlayer", "Playlist CSV exported"); }
+            }}
+            className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded border border-[hsl(var(--terminal-cyan))]/30 bg-[hsl(var(--terminal-cyan))]/10 text-[hsl(var(--terminal-cyan))] hover:bg-[hsl(var(--terminal-cyan))]/20 transition-all font-display font-semibold"
+            title="Export CSV"
+          >
+            <Download className="w-3 h-3" />
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const csv = await uploadFile(".csv");
+                const count = importPlaylistCSV(csv);
+                setPlaylist(loadPlaylist());
+                addLog("action", "MediaPlayer", `Imported ${count} items`);
+              } catch {}
+            }}
+            className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded border border-[hsl(var(--terminal-cyan))]/30 bg-[hsl(var(--terminal-cyan))]/10 text-[hsl(var(--terminal-cyan))] hover:bg-[hsl(var(--terminal-cyan))]/20 transition-all font-display font-semibold"
+            title="Import CSV"
+          >
+            <Upload className="w-3 h-3" />
           </button>
           <button
             onClick={() => setShowAdd(!showAdd)}
