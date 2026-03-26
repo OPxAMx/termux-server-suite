@@ -6,8 +6,15 @@ type MediaCategory = "Music" | "Video" | "Podcast" | "Playlist";
 
 interface MediaItem {
   title: string;
+  description?: string;
   url: string;
+  iframe_url?: string;
+  cover_image?: string;
+  rating?: number;
   category: MediaCategory;
+  tags?: string[];
+  duration?: string;
+  year?: number;
 }
 
 const CATEGORY_META = {
