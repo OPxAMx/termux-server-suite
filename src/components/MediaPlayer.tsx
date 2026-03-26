@@ -273,16 +273,39 @@ const MediaPlayer = () => {
         </button>
       </div>
 
-      {/* ✅ MODIFICATION 3 : iframe viewer prend toute la place restante */}
+      {/* iframe viewer with cover image overlay */}
       <div className="relative flex-1 bg-background border-b border-border">
         {activeUrl ? (
-          <iframe
-            src={activeUrl}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title="Media Player"
-          />
+          <>
+            {/* Show cover image if available and not yet playing */}
+            {(() => {
+              const activeItem = playlist.find((item) => (item.iframe_url || item.url) === activeUrl);
+              if (activeItem?.cover_image && !playing) {
+                return (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background cursor-pointer group" onClick={() => setPlaying(true)}>
+                    <img src={activeItem.cover_image} alt={activeItem.title} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-background/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-lg">
+                        <Play className="w-8 h-8 text-primary-foreground ml-1" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-sm font-display font-bold text-foreground drop-shadow-lg">{activeItem.title}</h3>
+                      {activeItem.description && <p className="text-[10px] text-muted-foreground mt-0.5 drop-shadow-lg">{activeItem.description}</p>}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            <iframe
+              src={activeUrl}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title="Media Player"
+            />
+          </>
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
             Aucun média sélectionné
