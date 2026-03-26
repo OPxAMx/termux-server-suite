@@ -308,7 +308,7 @@ const MediaPlayer = () => {
           <div className="flex-1 overflow-y-auto">
             {filtered.length > 0 ? (
               filtered.map((item, i) => {
-                const meta = CATEGORY_META[item.category];
+                const meta = CATEGORY_META[item.category] || CATEGORY_META.Music;
                 const realIndex = playlist.indexOf(item);
                 return (
                   <div
