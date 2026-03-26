@@ -153,9 +153,16 @@ const MediaPlayer = () => {
               try {
                 const csv = await uploadFile(".csv");
                 const count = importPlaylistCSV(csv);
-                setPlaylist(loadPlaylist());
-                addLog("action", "MediaPlayer", `Imported ${count} items`);
-              } catch {}
+                if (count > 0) {
+                  setPlaylist(loadPlaylist());
+                  toast.success(`${count} élément(s) importé(s)`);
+                  addLog("action", "MediaPlayer", `Imported ${count} items`);
+                } else {
+                  toast.error("Aucun élément valide trouvé dans le CSV. Format attendu: title,description,iframe_url,cover_image,rating,category,tags,duration,year");
+                }
+              } catch (err) {
+                toast.error("Erreur lors de l'import CSV");
+              }
             }}
             className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded border border-[hsl(var(--terminal-cyan))]/30 bg-[hsl(var(--terminal-cyan))]/10 text-[hsl(var(--terminal-cyan))] hover:bg-[hsl(var(--terminal-cyan))]/20 transition-all font-display font-semibold"
             title="Import CSV"
@@ -218,6 +225,15 @@ const MediaPlayer = () => {
             placeholder="URL YouTube ou média..."
             className="w-full bg-background rounded px-2 py-1 text-xs outline-none text-foreground border border-border placeholder:text-muted-foreground"
           />
+          <div className="flex items-center gap-2">
+            <Image className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            <input
+              value={customCover}
+              onChange={(e) => setCustomCover(e.target.value)}
+              placeholder="URL couverture (optionnel)..."
+              className="flex-1 bg-background rounded px-2 py-1 text-xs outline-none text-foreground border border-border placeholder:text-muted-foreground"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <select
               value={addCategory}
