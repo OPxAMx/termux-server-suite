@@ -227,7 +227,7 @@ const MediaPlayer = () => {
             className="w-full bg-background rounded px-2 py-1 text-xs outline-none text-foreground border border-border placeholder:text-muted-foreground"
           />
           <div className="flex items-center gap-2">
-            <Image className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            <ImageIcon className="w-3 h-3 text-muted-foreground flex-shrink-0" />
             <input
               value={customCover}
               onChange={(e) => setCustomCover(e.target.value)}
