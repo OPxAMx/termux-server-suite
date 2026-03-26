@@ -6,6 +6,8 @@ import {
   X, Save, Eye, Search, MoreVertical, ChevronDown, Globe, Link2,
   Star, ExternalLink, Code2, Zap, BookOpen,
 } from "lucide-react";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import ResourceCarousel from "@/components/ResourceCarousel";
 import {
   FsNode, loadFs, createNode, deleteNode, renameNode,
   copyNode, moveNode, updateFileContent, uploadFile, getNodeAtPath,
@@ -423,8 +425,9 @@ const FileManager = () => {
     </div>
   );
 
-  return (
-    <div className="flex flex-col h-full rounded-lg border border-border bg-card overflow-hidden" onClick={() => { setSelected(new Set()); setContextMenu(null); setResContextMenu(null); }}>
+  // File content panel (left side)
+  const renderFilePanel = () => (
+    <div className="flex flex-col h-full overflow-hidden" onClick={() => { setSelected(new Set()); setContextMenu(null); setResContextMenu(null); }}>
       {/* Header with tabs */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/50" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
@@ -537,6 +540,22 @@ const FileManager = () => {
 
       {/* RESOURCES TAB */}
       {managerTab === "resources" && renderResources()}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-full rounded-lg border border-border bg-card overflow-hidden">
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel defaultSize={30} minSize={20} maxSize={60}>
+          {renderFilePanel()}
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={70} minSize={30}>
+          <div className="h-full p-2">
+            <ResourceCarousel resources={filteredResources} onToggleFav={handleToggleFav} />
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       {/* Context Menu - Files */}
       {contextMenu && (
