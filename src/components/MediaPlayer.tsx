@@ -344,10 +344,10 @@ const MediaPlayer = () => {
 
           {/* Footer du side panel avec catégories */}
           <div className="border-t border-border bg-secondary/50 p-2 space-y-1">
-            {(Object.keys(CATEGORY_META) as MediaCategory[]).map((cat) => {
+          {(Object.keys(CATEGORY_META) as MediaCategory[]).map((cat) => {
               const meta = CATEGORY_META[cat];
               const Icon = meta.icon;
-              const count = useMemo(() => playlist.filter((item) => item.category === cat).length, [playlist, cat]);
+              const count = playlist.filter((item) => item.category === cat).length;
               return (
                 <div key={cat} className="flex items-center justify-between text-[9px] px-2 py-1">
                   <span className="flex items-center gap-1">
