@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu, Download, Upload } from "lucide-react";
+import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu, Download, Upload, ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 import { exportPlaylistCSV, importPlaylistCSV, downloadFile, uploadFile, addLog } from "@/lib/dataManager";
 
 type MediaCategory = "Music" | "Video" | "Podcast" | "Playlist";
