@@ -1,10 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  Globe, ArrowLeft, ArrowRight, RotateCw, Home, Star, Shield,
-  X, Plus, Maximize2, Minimize2, Minus, Search, Lock, Unlock,
-  Bookmark, Clock, Download, Settings, Wifi, WifiOff, Zap,
-  Monitor, ChevronDown, ExternalLink, Copy, Trash2, Eye, EyeOff,
-} from "lucide-react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Globe, ArrowLeft, ArrowRight, RotateCw, Chrome as Home, Star, Shield, X, Plus, Maximize2, Minimize2, Minus, Search, Lock, Clock as Unlock, Bookmark, Clock, Download, Settings, Wifi, WifiOff, Zap, Monitor, ChevronDown, ExternalLink, Copy, Trash2, Eye, EyeOff } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────
 interface BrowserTab {
@@ -216,8 +211,6 @@ const CyberBrowser = () => {
   const [settings, setSettingsState] = useState<BrowserSettings>(loadSettings);
   const [windowMode, setWindowMode] = useState<WindowMode>("normal");
   const [sidePanel, setSidePanel] = useState<ViewPanel>("none");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const addressRef = useRef<HTMLInputElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -230,14 +223,14 @@ const CyberBrowser = () => {
     }
   }, [activeTabId, activeTab?.url]);
 
-  // Auto-complete
-  useEffect(() => {
+  const suggestions = useMemo(() => {
     if (addressInput.length >= 2) {
-      setSuggestions(getAutoCompletions(addressInput, history, bookmarks));
-    } else {
-      setSuggestions([]);
+      return getAutoCompletions(addressInput, history, bookmarks);
     }
+    return [];
   }, [addressInput, history, bookmarks]);
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const updateTab = useCallback((id: string, patch: Partial<BrowserTab>) => {
     setTabs(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
@@ -253,20 +246,19 @@ const CyberBrowser = () => {
       isSecure: normalized.startsWith("https://"),
     });
 
-    // Record history
     if (!normalized.startsWith("about:")) {
-      const entry: HistoryEntry = { url: normalized, title: extractDomain(normalized), timestamp: Date.now() };
-      const newH = [...history.filter(h => h.url !== normalized), entry];
-      setHistory(newH);
-      saveHistory(newH);
+      setHistory(prev => {
+        const entry: HistoryEntry = { url: normalized, title: extractDomain(normalized), timestamp: Date.now() };
+        const newH = [...prev.filter(h => h.url !== normalized), entry];
+        saveHistory(newH);
+        return newH;
+      });
     }
 
     setAddressInput(normalized === "about:home" ? "" : normalized);
     setShowSuggestions(false);
-
-    // Simulate loading
     setTimeout(() => updateTab(tid, { loading: false }), 1500);
-  }, [activeTabId, history, updateTab]);
+  }, [activeTabId, updateTab]);
 
   const addTab = useCallback(() => {
     const id = newTabId();
@@ -290,20 +282,19 @@ const CyberBrowser = () => {
     });
   }, [activeTabId]);
 
-  const toggleBookmark = () => {
-    if (activeTab.url.startsWith("about:")) return;
-    const existing = bookmarks.findIndex(b => b.url === activeTab.url);
-    let newB: BookmarkEntry[];
-    if (existing >= 0) {
-      newB = bookmarks.filter((_, i) => i !== existing);
-    } else {
-      newB = [...bookmarks, { url: activeTab.url, title: activeTab.title, folder: "default" }];
-    }
-    setBookmarks(newB);
-    saveBookmarks(newB);
-  };
+  const isBookmarked = useMemo(() => bookmarks.some(b => b.url === activeTab.url), [bookmarks, activeTab.url]);
 
-  const isBookmarked = bookmarks.some(b => b.url === activeTab.url);
+  const toggleBookmark = useCallback(() => {
+    if (activeTab.url.startsWith("about:")) return;
+    setBookmarks(prev => {
+      const existing = prev.findIndex(b => b.url === activeTab.url);
+      const newB = existing >= 0
+        ? prev.filter((_, i) => i !== existing)
+        : [...prev, { url: activeTab.url, title: activeTab.title, folder: "default" }];
+      saveBookmarks(newB);
+      return newB;
+    });
+  }, [activeTab.url, activeTab.title]);
 
   const updateSettings = (patch: Partial<BrowserSettings>) => {
     const newS = { ...settings, ...patch };

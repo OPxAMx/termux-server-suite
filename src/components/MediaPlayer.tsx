@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu, Download, Upload } from "lucide-react";
 import { exportPlaylistCSV, importPlaylistCSV, downloadFile, uploadFile, addLog } from "@/lib/dataManager";
 
@@ -10,28 +10,12 @@ interface MediaItem {
   category: MediaCategory;
 }
 
-const CATEGORY_META: Record<MediaCategory, { icon: React.ReactNode; color: string; tagBg: string }> = {
-  Music: {
-    icon: <Music className="w-3 h-3" />,
-    color: "text-primary",
-    tagBg: "bg-primary/20 text-primary border-primary/30",
-  },
-  Video: {
-    icon: <Video className="w-3 h-3" />,
-    color: "text-[hsl(var(--terminal-cyan))]",
-    tagBg: "bg-[hsl(var(--terminal-cyan))]/20 text-[hsl(var(--terminal-cyan))] border-[hsl(var(--terminal-cyan))]/30",
-  },
-  Podcast: {
-    icon: <Radio className="w-3 h-3" />,
-    color: "text-[hsl(var(--terminal-yellow))]",
-    tagBg: "bg-[hsl(var(--terminal-yellow))]/20 text-[hsl(var(--terminal-yellow))] border-[hsl(var(--terminal-yellow))]/30",
-  },
-  Playlist: {
-    icon: <Music className="w-3 h-3" />,
-    color: "text-[hsl(var(--terminal-green))]",
-    tagBg: "bg-[hsl(var(--terminal-green))]/20 text-[hsl(var(--terminal-green))] border-[hsl(var(--terminal-green))]/30",
-  },
-};
+const CATEGORY_META = {
+  Music: { icon: Music, color: "text-primary", tagBg: "bg-primary/20 text-primary border-primary/30" },
+  Video: { icon: Video, color: "text-[hsl(var(--terminal-cyan))]", tagBg: "bg-[hsl(var(--terminal-cyan))]/20 text-[hsl(var(--terminal-cyan))] border-[hsl(var(--terminal-cyan))]/30" },
+  Podcast: { icon: Radio, color: "text-[hsl(var(--terminal-yellow))]", tagBg: "bg-[hsl(var(--terminal-yellow))]/20 text-[hsl(var(--terminal-yellow))] border-[hsl(var(--terminal-yellow))]/30" },
+  Playlist: { icon: Music, color: "text-[hsl(var(--terminal-green))]", tagBg: "bg-[hsl(var(--terminal-green))]/20 text-[hsl(var(--terminal-green))] border-[hsl(var(--terminal-green))]/30" },
+} as const satisfies Record<MediaCategory, { icon: typeof Music; color: string; tagBg: string }>;
 
 const DEFAULT_ITEMS: MediaItem[] = [
   { title: "Lofi Radio", url: "https://www.youtube.com/embed/jfKfPfyJRdk", category: "Music" },
@@ -74,17 +58,24 @@ const MediaPlayer = () => {
     }
   }, []);
 
-  const filtered = activeCategory === "All" ? playlist : playlist.filter((i) => i.category === activeCategory);
+  const filtered = useMemo(
+    () => (activeCategory === "All" ? playlist : playlist.filter((i) => i.category === activeCategory)),
+    [playlist, activeCategory]
+  );
 
-  const handlePlayItem = (item: MediaItem) => {
-    if (item.url) setActiveUrl(item.url);
-  };
-
-  const handleAdd = () => {
-    if (!customUrl.trim()) return;
-    let url = customUrl.trim();
+  const extractYoutubeId = useCallback((url: string): string => {
     const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-    if (ytMatch) url = `https://www.youtube.com/embed/${ytMatch[1]}`;
+    return ytMatch ? `https://www.youtube.com/embed/${ytMatch[1]}` : url;
+  }, []);
+
+  const handlePlayItem = useCallback((item: MediaItem) => {
+    if (item.url) setActiveUrl(item.url);
+  }, []);
+
+  const handleAdd = useCallback(() => {
+    const trimmedUrl = customUrl.trim();
+    if (!trimmedUrl) return;
+    const url = extractYoutubeId(trimmedUrl);
     const title = customTitle.trim() || `Media ${playlist.length + 1}`;
     const newItem: MediaItem = { title, url, category: addCategory };
     const updated = [...playlist, newItem];
@@ -94,24 +85,24 @@ const MediaPlayer = () => {
     setCustomUrl("");
     setCustomTitle("");
     setShowAdd(false);
-  };
+  }, [customUrl, customTitle, playlist, addCategory, extractYoutubeId]);
 
-  const handleRemove = (index: number) => {
-    const updated = playlist.filter((_, i) => i !== index);
-    setPlaylist(updated);
-    savePlaylist(updated);
-    if (activeUrl === playlist[index].url && updated.length > 0) {
-      setActiveUrl(updated[0].url);
-    }
-  };
+  const handleRemove = useCallback((index: number) => {
+    setPlaylist((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      savePlaylist(updated);
+      if (activeUrl === prev[index].url && updated.length > 0) {
+        setActiveUrl(updated[0].url);
+      }
+      return updated;
+    });
+  }, [activeUrl]);
 
-  const handleCustomGo = () => {
-    if (!customUrl.trim()) return;
-    let url = customUrl.trim();
-    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-    if (ytMatch) url = `https://www.youtube.com/embed/${ytMatch[1]}`;
-    setActiveUrl(url);
-  };
+  const handleCustomGo = useCallback(() => {
+    const trimmedUrl = customUrl.trim();
+    if (!trimmedUrl) return;
+    setActiveUrl(extractYoutubeId(trimmedUrl));
+  }, [customUrl, extractYoutubeId]);
 
   return (
     // ✅ MODIFICATION 1 : Conteneur principal avec position relative (pour position absolute du side panel)
@@ -179,6 +170,7 @@ const MediaPlayer = () => {
         </button>
         {(Object.keys(CATEGORY_META) as MediaCategory[]).map((cat) => {
           const meta = CATEGORY_META[cat];
+          const Icon = meta.icon;
           return (
             <button
               key={cat}
@@ -189,7 +181,7 @@ const MediaPlayer = () => {
                   : "text-muted-foreground border-transparent hover:text-foreground"
               }`}
             >
-              {meta.icon} {cat}
+              <Icon className="w-3 h-3" /> {cat}
             </button>
           );
         })}
@@ -321,11 +313,12 @@ const MediaPlayer = () => {
           <div className="border-t border-border bg-secondary/50 p-2 space-y-1">
             {(Object.keys(CATEGORY_META) as MediaCategory[]).map((cat) => {
               const meta = CATEGORY_META[cat];
-              const count = playlist.filter((item) => item.category === cat).length;
+              const Icon = meta.icon;
+              const count = useMemo(() => playlist.filter((item) => item.category === cat).length, [playlist, cat]);
               return (
                 <div key={cat} className="flex items-center justify-between text-[9px] px-2 py-1">
                   <span className="flex items-center gap-1">
-                    {meta.icon}
+                    <Icon className="w-3 h-3" />
                     <span>{cat}</span>
                   </span>
                   <span className="text-muted-foreground">({count})</span>
