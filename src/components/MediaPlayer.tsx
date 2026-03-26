@@ -1,13 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu, Download, Upload } from "lucide-react";
+import { Music, Video, Radio, Play, ExternalLink, Plus, X, Trash2, Menu, Download, Upload, ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 import { exportPlaylistCSV, importPlaylistCSV, downloadFile, uploadFile, addLog } from "@/lib/dataManager";
 
 type MediaCategory = "Music" | "Video" | "Podcast" | "Playlist";
 
 interface MediaItem {
   title: string;
+  description?: string;
   url: string;
+  iframe_url?: string;
+  cover_image?: string;
+  rating?: number;
   category: MediaCategory;
+  tags?: string[];
+  duration?: string;
+  year?: number;
 }
 
 const CATEGORY_META = {
@@ -47,14 +55,14 @@ const MediaPlayer = () => {
   const [activeUrl, setActiveUrl] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [customTitle, setCustomTitle] = useState("");
+  const [customCover, setCustomCover] = useState("");
   const [addCategory, setAddCategory] = useState<MediaCategory>("Playlist");
   const [showAdd, setShowAdd] = useState(false);
-  // ✅ NOUVEAU : État pour contrôler l'affichage du side panel
   const [showPlaylist, setShowPlaylist] = useState(true);
 
   useEffect(() => {
     if (playlist.length > 0 && !activeUrl) {
-      setActiveUrl(playlist[0].url);
+      setActiveUrl(playlist[0].iframe_url || playlist[0].url);
     }
   }, []);
 
@@ -69,7 +77,8 @@ const MediaPlayer = () => {
   }, []);
 
   const handlePlayItem = useCallback((item: MediaItem) => {
-    if (item.url) setActiveUrl(item.url);
+    const url = item.iframe_url || item.url;
+    if (url) setActiveUrl(url);
   }, []);
 
   const handleAdd = useCallback(() => {
@@ -77,22 +86,30 @@ const MediaPlayer = () => {
     if (!trimmedUrl) return;
     const url = extractYoutubeId(trimmedUrl);
     const title = customTitle.trim() || `Media ${playlist.length + 1}`;
-    const newItem: MediaItem = { title, url, category: addCategory };
+    const newItem: MediaItem = {
+      title,
+      url,
+      iframe_url: url,
+      cover_image: customCover.trim() || undefined,
+      category: addCategory,
+    };
     const updated = [...playlist, newItem];
     setPlaylist(updated);
     savePlaylist(updated);
     setActiveUrl(url);
     setCustomUrl("");
     setCustomTitle("");
+    setCustomCover("");
     setShowAdd(false);
-  }, [customUrl, customTitle, playlist, addCategory, extractYoutubeId]);
+  }, [customUrl, customTitle, customCover, playlist, addCategory, extractYoutubeId]);
 
   const handleRemove = useCallback((index: number) => {
     setPlaylist((prev) => {
       const updated = prev.filter((_, i) => i !== index);
       savePlaylist(updated);
-      if (activeUrl === prev[index].url && updated.length > 0) {
-        setActiveUrl(updated[0].url);
+      const removedUrl = prev[index].iframe_url || prev[index].url;
+      if (activeUrl === removedUrl && updated.length > 0) {
+        setActiveUrl(updated[0].iframe_url || updated[0].url);
       }
       return updated;
     });
@@ -137,9 +154,16 @@ const MediaPlayer = () => {
               try {
                 const csv = await uploadFile(".csv");
                 const count = importPlaylistCSV(csv);
-                setPlaylist(loadPlaylist());
-                addLog("action", "MediaPlayer", `Imported ${count} items`);
-              } catch {}
+                if (count > 0) {
+                  setPlaylist(loadPlaylist());
+                  toast.success(`${count} élément(s) importé(s)`);
+                  addLog("action", "MediaPlayer", `Imported ${count} items`);
+                } else {
+                  toast.error("Aucun élément valide trouvé dans le CSV. Format attendu: title,description,iframe_url,cover_image,rating,category,tags,duration,year");
+                }
+              } catch (err) {
+                toast.error("Erreur lors de l'import CSV");
+              }
             }}
             className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded border border-[hsl(var(--terminal-cyan))]/30 bg-[hsl(var(--terminal-cyan))]/10 text-[hsl(var(--terminal-cyan))] hover:bg-[hsl(var(--terminal-cyan))]/20 transition-all font-display font-semibold"
             title="Import CSV"
@@ -202,6 +226,15 @@ const MediaPlayer = () => {
             placeholder="URL YouTube ou média..."
             className="w-full bg-background rounded px-2 py-1 text-xs outline-none text-foreground border border-border placeholder:text-muted-foreground"
           />
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            <input
+              value={customCover}
+              onChange={(e) => setCustomCover(e.target.value)}
+              placeholder="URL couverture (optionnel)..."
+              className="flex-1 bg-background rounded px-2 py-1 text-xs outline-none text-foreground border border-border placeholder:text-muted-foreground"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <select
               value={addCategory}

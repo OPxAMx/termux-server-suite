@@ -169,24 +169,50 @@ export function importResourcesCSV(csv: string): number {
 }
 
 // ─── Playlist CSV ────────────────────────────────────────────
+const PLAYLIST_COLUMNS = ["title", "description", "iframe_url", "cover_image", "rating", "category", "tags", "duration", "year"];
+
 export function exportPlaylistCSV(): string {
   const raw = localStorage.getItem("media-playlist");
   if (!raw) return "";
-  return arrayToCSV(JSON.parse(raw), ["title", "url", "category"]);
+  const items = JSON.parse(raw) as Record<string, unknown>[];
+  return arrayToCSV(items.map((item) => ({
+    title: item.title || "",
+    description: item.description || "",
+    iframe_url: item.iframe_url || item.url || "",
+    cover_image: item.cover_image || "",
+    rating: item.rating ?? "",
+    category: item.category || "",
+    tags: Array.isArray(item.tags) ? (item.tags as string[]).join(";") : (item.tags || ""),
+    duration: item.duration || "",
+    year: item.year ?? "",
+  })), PLAYLIST_COLUMNS);
 }
 
 export function importPlaylistCSV(csv: string): number {
-  const rows = csvToArray(csv);
-  const items = rows.map((r) => ({
-    title: r.title || "Untitled",
-    url: r.url || "",
-    category: r.category || "Playlist",
-  })).filter((r) => r.url);
-  const existing = JSON.parse(localStorage.getItem("media-playlist") || "[]");
-  const merged = [...existing, ...items];
-  localStorage.setItem("media-playlist", JSON.stringify(merged));
-  addLog("action", "MediaPlayer", `Imported ${items.length} playlist items from CSV`);
-  return items.length;
+  try {
+    const rows = csvToArray(csv);
+    if (rows.length === 0) return 0;
+    const items = rows.map((r) => ({
+      title: r.title || "Untitled",
+      description: r.description || "",
+      url: r.iframe_url || r.url || "",
+      iframe_url: r.iframe_url || r.url || "",
+      cover_image: r.cover_image || "",
+      rating: r.rating ? parseFloat(r.rating) : 0,
+      category: r.category || "Playlist",
+      tags: r.tags ? r.tags.split(";").map((t: string) => t.trim()).filter(Boolean) : [],
+      duration: r.duration || "",
+      year: r.year ? parseInt(r.year) : 0,
+    })).filter((r) => r.iframe_url || r.url);
+    const existing = JSON.parse(localStorage.getItem("media-playlist") || "[]");
+    const merged = [...existing, ...items];
+    localStorage.setItem("media-playlist", JSON.stringify(merged));
+    addLog("action", "MediaPlayer", `Imported ${items.length} playlist items from CSV`);
+    return items.length;
+  } catch (err) {
+    addLog("error", "MediaPlayer", `CSV import failed: ${err instanceof Error ? err.message : String(err)}`);
+    return 0;
+  }
 }
 
 // ─── Bookmarks CSV ───────────────────────────────────────────
