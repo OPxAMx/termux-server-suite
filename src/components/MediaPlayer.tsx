@@ -59,6 +59,7 @@ const MediaPlayer = () => {
   const [addCategory, setAddCategory] = useState<MediaCategory>("Playlist");
   const [showAdd, setShowAdd] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(true);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     if (playlist.length > 0 && !activeUrl) {
