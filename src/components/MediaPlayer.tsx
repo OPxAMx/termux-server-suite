@@ -79,7 +79,10 @@ const MediaPlayer = () => {
 
   const handlePlayItem = useCallback((item: MediaItem) => {
     const url = item.iframe_url || item.url;
-    if (url) setActiveUrl(url);
+    if (url) {
+      setActiveUrl(url);
+      setPlaying(!item.cover_image); // show cover if available, otherwise play directly
+    }
   }, []);
 
   const handleAdd = useCallback(() => {
