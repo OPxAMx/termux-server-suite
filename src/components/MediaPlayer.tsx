@@ -54,14 +54,14 @@ const MediaPlayer = () => {
   const [activeUrl, setActiveUrl] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [customTitle, setCustomTitle] = useState("");
+  const [customCover, setCustomCover] = useState("");
   const [addCategory, setAddCategory] = useState<MediaCategory>("Playlist");
   const [showAdd, setShowAdd] = useState(false);
-  // ✅ NOUVEAU : État pour contrôler l'affichage du side panel
   const [showPlaylist, setShowPlaylist] = useState(true);
 
   useEffect(() => {
     if (playlist.length > 0 && !activeUrl) {
-      setActiveUrl(playlist[0].url);
+      setActiveUrl(playlist[0].iframe_url || playlist[0].url);
     }
   }, []);
 
@@ -76,7 +76,8 @@ const MediaPlayer = () => {
   }, []);
 
   const handlePlayItem = useCallback((item: MediaItem) => {
-    if (item.url) setActiveUrl(item.url);
+    const url = item.iframe_url || item.url;
+    if (url) setActiveUrl(url);
   }, []);
 
   const handleAdd = useCallback(() => {
@@ -84,22 +85,30 @@ const MediaPlayer = () => {
     if (!trimmedUrl) return;
     const url = extractYoutubeId(trimmedUrl);
     const title = customTitle.trim() || `Media ${playlist.length + 1}`;
-    const newItem: MediaItem = { title, url, category: addCategory };
+    const newItem: MediaItem = {
+      title,
+      url,
+      iframe_url: url,
+      cover_image: customCover.trim() || undefined,
+      category: addCategory,
+    };
     const updated = [...playlist, newItem];
     setPlaylist(updated);
     savePlaylist(updated);
     setActiveUrl(url);
     setCustomUrl("");
     setCustomTitle("");
+    setCustomCover("");
     setShowAdd(false);
-  }, [customUrl, customTitle, playlist, addCategory, extractYoutubeId]);
+  }, [customUrl, customTitle, customCover, playlist, addCategory, extractYoutubeId]);
 
   const handleRemove = useCallback((index: number) => {
     setPlaylist((prev) => {
       const updated = prev.filter((_, i) => i !== index);
       savePlaylist(updated);
-      if (activeUrl === prev[index].url && updated.length > 0) {
-        setActiveUrl(updated[0].url);
+      const removedUrl = prev[index].iframe_url || prev[index].url;
+      if (activeUrl === removedUrl && updated.length > 0) {
+        setActiveUrl(updated[0].iframe_url || updated[0].url);
       }
       return updated;
     });
